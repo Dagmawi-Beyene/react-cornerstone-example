@@ -4,6 +4,9 @@ import * as cornerstone from "cornerstone-core";
 import * as cornerstoneTools from "cornerstone-tools";
 import * as cornerstoneMath from "cornerstone-math";
 import dicomLoader from "./dicom-loader";
+import "./dicom-viewer.css"
+
+
 // import exampleImageIdLoader from "./exampleImageIdLoader";
 
 class DicomViewer extends React.Component {
@@ -16,12 +19,14 @@ class DicomViewer extends React.Component {
   componentDidMount() {
     this.loadImage();
   }
+  
   dicomImage = null;
   loadImage = () => {
     const element = this.dicomImage;
     // Listen for changes to the viewport so we can update the text overlays in the corner
     function onImageRendered(e) {
       const viewport = cornerstone.getViewport(e.target);
+      
       document.getElementById(
         "mrbottomleft"
       ).textContent = `WW/WC: ${Math.round(
@@ -30,15 +35,24 @@ class DicomViewer extends React.Component {
       document.getElementById(
         "mrbottomright"
       ).textContent = `Zoom: ${viewport.scale.toFixed(2)}`;
-    }
+      document.getElementById(
+        "mrtopleft"
+      ).textContent = `X: ${viewport.translation.x.toFixed(2)} Y: ${viewport.translation.y.toFixed(2)}`;
+      
+      }   
+    
+
     element.addEventListener("cornerstoneimagerendered", onImageRendered);
+  
+
     const config = {
       // invert: true,
       minScale: 0.25,
       maxScale: 20.0,
-      preventZoomOutsideImage: true
+      preventZoomOutsideImage: true,
     };
     cornerstoneTools.zoom.setConfiguration(config);
+    
     document.getElementById("chkshadow").addEventListener("change", () => {
       cornerstoneTools.length.setConfiguration({ shadow: this.checked });
       cornerstoneTools.angle.setConfiguration({ shadow: this.checked });
@@ -46,7 +60,7 @@ class DicomViewer extends React.Component {
     });
     const imageId = "example://1";
     cornerstone.enable(element);
-    cornerstone.loadImage(imageId).then(image => {
+    cornerstone.loadImage(imageId).then((image) => {
       cornerstone.displayImage(element, image);
       cornerstoneTools.mouseInput.enable(element);
       cornerstoneTools.mouseWheelInput.enable(element);
@@ -61,6 +75,10 @@ class DicomViewer extends React.Component {
       cornerstoneTools.rectangleRoi.enable(element);
       cornerstoneTools.angle.enable(element);
       cornerstoneTools.highlight.enable(element);
+      cornerstoneTools.freehand.enable(element);
+      cornerstoneTools.rotate.enable(element);
+      cornerstoneTools.magnify.enable(element);
+      cornerstoneTools.brush.enable(element);
     });
   };
   enableTool = (toolName, mouseButtonNumber) => {
@@ -80,10 +98,14 @@ class DicomViewer extends React.Component {
     cornerstoneTools.angle.deactivate(this.dicomImage, 1);
     cornerstoneTools.highlight.deactivate(this.dicomImage, 1);
     cornerstoneTools.freehand.deactivate(this.dicomImage, 1);
+    cornerstoneTools.rotate.deactivate(this.dicomImage, 1);
+    cornerstoneTools.magnify.deactivate(this.dicomImage, 1);
+    cornerstoneTools.brush.deactivate(this.dicomImage, 1);
   };
-  dicomImageRef = el => {
+  dicomImageRef = (el) => {
     this.dicomImage = el;
   };
+  
   render() {
     return (
       <div className="container">
@@ -174,10 +196,35 @@ class DicomViewer extends React.Component {
               >
                 Freeform ROI
               </button>
+              <button
+                onClick={() => {
+                  this.enableTool("rotate", 1);
+                }}
+                className="list-group-item"
+              >
+                Rotate
+              </button>
+              <button
+                onClick={() => {
+                  this.enableTool("brush", 1);
+                }}
+                className="list-group-item"
+              >
+                Brush
+              </button>
+              <button
+                onClick={() => {
+                  this.enableTool("magnify", 1);
+                }}
+                className="list-group-item"
+              >
+                Magnify
+              </button>
             </ul>
             <div className="checkbox">
               <label htmlFor="chkshadow">
-                <input type="checkbox" id="chkshadow" />Apply shadow
+                <input type="checkbox" id="chkshadow" />
+                Apply shadow
               </label>
             </div>
             <br />
@@ -189,7 +236,7 @@ class DicomViewer extends React.Component {
                 height: 512,
                 position: "relative",
                 display: "inline-block",
-                color: "white"
+                color: "white",
               }}
               onContextMenu={() => false}
               className="cornerstone-enabled-image"
@@ -204,9 +251,13 @@ class DicomViewer extends React.Component {
                   height: 512,
                   top: 0,
                   left: 0,
-                  position: "absolute"
+                  position: "absolute",
+                  cursor: "crosshair",
                 }}
+               
               />
+              
+             
               <div
                 id="mrtopleft"
                 style={{ position: "absolute", top: 3, left: 3 }}
@@ -282,6 +333,22 @@ class DicomViewer extends React.Component {
                 Tool handles - left click drag on any measurement tool handle
                 (the circle) to change the handles position
               </li>
+            </ul>
+            <h3>Added Functionality</h3>
+            <ul>
+              <li>Changed cursor type for image div</li>
+              <li>Activation of a tool for left mouse buttonClicked
+                <ul>Rotate - rotates the image by dragging</ul>
+                <ul>Brush - marking places with a color</ul>
+                <ul>
+                  Maginify - magnifies the image to a specific part 
+                </ul>
+              </li>
+              <li>Implemented Button color to know which button was active</li>
+              <li>
+                Show x and y coordinates when zooming
+              </li>
+
             </ul>
           </div>
         </div>
